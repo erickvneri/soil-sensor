@@ -56,7 +56,12 @@ function Wifi:new() -- Wifi class constructor
   return instance
 end
 
-
+--[[
+-- Wifi Access Point Interface
+--
+-- Returns:
+--   err or nil
+--]]
 function Wifi:ap_init()
   local config = {
     ssid=self.NAME,
@@ -68,11 +73,13 @@ function Wifi:ap_init()
     beacon=self.BEACON,
     save=self.SAVE
   }
-  local success, err = pcall(self.ap.config, config, self.SAVE)
+
+  -- Enable access point
+  local _, err = pcall(self.ap.config, config, self.SAVE)
 
   config = nil
   collectgarbage()
-  return true and success or err
+  return true and err ~= nil or nil
 end
 
 
@@ -102,9 +109,11 @@ function Wifi:sta_init(ssid, pwd, bssid)
   local _, err = pcall(self.sta.config, sta_config, self.SAVE)
   if err ~= nil then return err end
 
+  -- Wifi station hostname
   local _, err pcall(self.sta.sethostname, self.NAME)
   if err ~= nil then return err end
 
+  -- Connect to access point
   local _, err = pcall(self.sta.connect)
 
   sta_config = nil
