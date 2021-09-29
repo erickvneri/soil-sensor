@@ -113,16 +113,21 @@ function Wifi:sta_init(ssid, pwd, bssid)
 end
 
 
--- FIXME: settle scan service
-function Wifi:scan_network(verbose)
-  verbose = true and verbose or false
-
-  return self.sta.scan({}, function (err, list)
-    for k,net in pairs(list) do
-      print(net.ssid)
-    end
-    return list
-  end)
+--[[
+-- Wifi Access Point Scanner.
+--
+-- Takes:
+--   @scan_callback: function
+--   (callback will be called
+--   as soon as scanning has
+--   table of Wifi APs ready.)
+--
+-- Returns:
+--   err or nil
+--]]
+function Wifi:scan_network(scan_callback)
+  local _, err = pcall(self.sta.scan, {}, scan_callback)
+  return true and err ~= nil or nil
 end
 
 
