@@ -37,5 +37,3 @@ local Wifi = require 'wifi_if'
 
 local network = Wifi:new()
 network:ap_init()
-local nets = network:scan_network()
-
