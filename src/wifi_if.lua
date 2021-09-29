@@ -39,6 +39,7 @@ function Wifi:new() -- Wifi class constructor
   instance.MAXCONN = 4
   instance.BEACON = 100
   instance.SAVE = true
+  instance.STA_AUTO_CONNECT = false
 
   ---- Wifi mode setup
   local _, err = pcall(
@@ -67,7 +68,7 @@ function Wifi:ap_init()
     beacon=self.BEACON,
     save=self.SAVE
   }
-  local success, err = pcall(self.ap.config, config)
+  local success, err = pcall(self.ap.config, config, self.SAVE)
 
   config = nil
   collectgarbage()
@@ -75,7 +76,37 @@ function Wifi:ap_init()
 end
 
 
+--[[
+-- Configure the Wifi Station
+-- Inteface and connect it to
+-- the Access Point reference
+-- received.
+--
+-- Takes:
+--   @ssid: string
+--   @pwd: string
+--   @bssid: string
+--
+--  Returns:
+--    nil or err
+--]]
 function Wifi:sta_init(ssid, pwd, bssid)
+  local sta_config = {
+    ssid = ssid,
+    pwd = pwd,
+    auto = self.STA_AUTO_CONNECT,
+    bssid = bssid
+  }
+
+  -- Config Wifi Station
+  local _, err = pcall(self.sta.config, sta_config, self.SAVE)
+  if err ~= nil then return err end
+
+  local _, err = pcall(self.sta.connect)
+
+  sta_config = nil
+  collectgarbage()
+  return nil or err
 end
 
 
