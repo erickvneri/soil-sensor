@@ -102,6 +102,9 @@ function Wifi:sta_init(ssid, pwd, bssid)
   local _, err = pcall(self.sta.config, sta_config, self.SAVE)
   if err ~= nil then return err end
 
+  local _, err pcall(self.sta.sethostname, self.NAME)
+  if err ~= nil then return err end
+
   local _, err = pcall(self.sta.connect)
 
   sta_config = nil
