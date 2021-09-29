@@ -21,7 +21,7 @@
 local Wifi = {}
 
 
-function Wifi:new()
+function Wifi:new() -- Wifi class constructor
   local instance = {}
 
   -- Wifi module abstraction
@@ -40,7 +40,7 @@ function Wifi:new()
   instance.BEACON = 100
   instance.SAVE = true
 
-  ---- Initial interface setup
+  ---- Wifi mode setup
   local _, err = pcall(
     instance.wifi.mode,
     instance.MODE,
@@ -75,7 +75,8 @@ function Wifi:ap_init()
 end
 
 
-function Wifi:sta_init(ssid, pwd)end
+function Wifi:sta_init(ssid, pwd, bssid)
+end
 
 
 -- FIXME: settle scan service
