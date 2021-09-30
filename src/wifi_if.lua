@@ -29,7 +29,7 @@ function Wifi:new() -- Wifi class constructor
   instance.ap = instance.wifi.ap
   instance.sta = instance.wifi.sta
 
-  ---- Wifi interface config
+  -- Wifi interface config
   instance.MODE = instance.wifi.STATIONAP
   instance.NAME = 'soil-sensor-develop-0.0.1'
   instance.PWD = 'dummy-passphrase'
@@ -41,7 +41,7 @@ function Wifi:new() -- Wifi class constructor
   instance.SAVE = true
   instance.STA_AUTO_CONNECT = false
 
-  ---- Wifi mode setup
+  -- Wifi mode setup
   local _, err = pcall(
     instance.wifi.mode,
     instance.MODE,
@@ -55,6 +55,7 @@ function Wifi:new() -- Wifi class constructor
   setmetatable(instance, {__index = Wifi})
   return instance
 end
+
 
 --[[
 -- Wifi Access Point Interface
@@ -79,7 +80,7 @@ function Wifi:ap_init()
 
   config = nil
   collectgarbage()
-  return true and err ~= nil or nil
+  return nil or err
 end
 
 
@@ -136,7 +137,7 @@ end
 --]]
 function Wifi:scan_network(scan_callback)
   local _, err = pcall(self.sta.scan, {}, scan_callback)
-  return true and err ~= nil or nil
+  return nil or err
 end
 
 
