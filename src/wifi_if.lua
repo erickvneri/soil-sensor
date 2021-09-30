@@ -99,7 +99,7 @@ end
 --  Returns:
 --    nil or err
 --]]
-function Wifi:sta_init(ssid, pwd, bssid)
+function Wifi:sta_init(ssid, pwd)
   -- Station config params
   local sta_config = {
     ssid = ssid,
@@ -141,5 +141,27 @@ function Wifi:scan_network(scan_callback)
   return nil or err
 end
 
+
+--[[
+-- Wifi Station clearconfig
+--
+-- As wifi.sta.clearconfig() isn't
+-- natively supported by dev-esp32
+-- firmware, this resouce intends to
+-- monkey patch adisconnection and reset
+-- configs redefining it with empty
+-- strings.
+--]]
+function Wifi:force_disconnect()
+  local nil_config = {
+    ssid = '',
+    pwd = '',
+    auto = self.STA_AUTO_CONNECT
+  }
+
+  -- Redefine station config
+  local _, err = pcall(self.sta.config, nil_config, self.SAVE)
+  return err
+end
 
 return Wifi
