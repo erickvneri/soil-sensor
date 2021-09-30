@@ -64,6 +64,7 @@ end
 --   err or nil
 --]]
 function Wifi:ap_init()
+  -- AP config params
   local config = {
     ssid=self.NAME,
     pwd=self.PWD,
@@ -99,11 +100,11 @@ end
 --    nil or err
 --]]
 function Wifi:sta_init(ssid, pwd, bssid)
+  -- Station config params
   local sta_config = {
     ssid = ssid,
     pwd = pwd,
-    auto = self.STA_AUTO_CONNECT,
-    bssid = bssid
+    auto = self.STA_AUTO_CONNECT
   }
 
   -- Config Wifi Station
