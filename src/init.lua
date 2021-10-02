@@ -34,6 +34,11 @@ print([[
 
 ]])
 local Wifi = require 'wifi_if'
+local TemperatureSensor = require 'components.temperature'
 
 local network = Wifi:new()
 network:ap_init()
+
+local temp_component = TemperatureSensor:new(14)
+local err, temp, hum = temp_component:getdata()
+print(string.format('Temperature: %s, Humidity: %s, Error: %s', temp, hum, tostring(err)))
