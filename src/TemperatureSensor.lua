@@ -18,23 +18,36 @@
 -- LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
 -- OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
 -- THE SOFTWARE.
+
+--[[
+-- DHT-based Temperature & Humidity
+-- driver.
+--
+-- By default, the temperature provided
+-- is based in Celcius (°C) degree scale
+-- and does not support floating point.
+--]]
 local TemperatureSensor = {}
+TemperatureSensor.DHT11 = 0x01
+TemperatureSensor.DHT2x = 0x02
 
 
 function TemperatureSensor:new(gpio, component) -- class constructor
-  local instance = {}
+  local instance = {
+    [0x01] = dht.read11,
+    [0x02] = dht.read2x
+  }
 
   -- DHT module abrstracion
   instance.gpio = gpio
-  instance.component = dht
-  instance.IS_DHT2x = true and component or false
+  instance.read = instance[component]
 
   -- Shorthand enums
-  instance.OK = instance.component.OK
+  instance.OK = dht.OK
   -- Error enum & msg
-  instance.ERROR_CHECKSUM = instance.component.ERROR_CHECKSUM
+  instance.ERROR_CHECKSUM = dht.ERROR_CHECKSUM
   instance.CHECKSUM_MSG = 'Checksum failed'
-  instance.ERROR_TIMEOUT = instance.component.ERROR_TIMEOUT
+  instance.ERROR_TIMEOUT = dht.ERROR_TIMEOUT
   instance.TIMEOUT_MSG = 'GPIO did timout'
 
   setmetatable(instance, {__index = TemperatureSensor})
@@ -43,7 +56,7 @@ end
 
 
 function TemperatureSensor:getdata()
-  local stat, temp, hum = assert(self.component.read11(self.gpio))
+  local stat, temp, hum = assert(self.read(self.gpio))
   local err = nil
 
   if stat == self.ERROR_CHECKSUM then
@@ -51,8 +64,7 @@ function TemperatureSensor:getdata()
   elseif stat == self.ERROR_TIMEOUT then
     err = self.TIMEOUT_MSG
   end
-  return err, temp, hum
+  return temp, hum, err
 end
 
 return TemperatureSensor
-
