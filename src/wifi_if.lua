@@ -31,20 +31,18 @@ function Wifi:new() -- Wifi class constructor
 
   -- Wifi interface config
   instance._MODE = instance.wifi.STATIONAP
-  instance._NAME = 'soil-sensor-develop-0.0.1'
+  instance._NAME = 'soil-sensor-develop-v001'
   instance._PWD = 'dummy-passphrase'
   instance._AUTHMODE = instance.wifi.WPA_WPA2_PSK
   instance._HIDDEN = false
   instance._CHANNEL = 6
   instance._MAXCONN = 4
   instance._BEACON = 100
-  instance._SAVE = true
+  instance._SAVE_CONFIG = true
   instance._STA_AUTO_CONNECT = false
 
   -- Wifi mode setup
-  assert(
-    instance.wifi.setmode(instance._MODE),
-    'cannot init STATIONAP mode')
+  assert(instance.wifi.setmode(instance._MODE))
 
   setmetatable(instance, {__index = Wifi})
   return instance
@@ -67,13 +65,11 @@ function Wifi:ap_init()
     channel = self._CHANNEL,
     max = self._MAXCONN,
     beacon = self._BEACON,
-    save = self._SAVE
+    save = self._SAVE_CONFIG
   }
 
   ---- Enable access point
-  assert(
-    self.ap.config(config),
-    'cannot init wifi.ap')
+  assert(self.ap.config(config))
 
   config = nil
   collectgarbage()
@@ -89,33 +85,33 @@ end
 -- Takes:
 --   @ssid: string
 --   @pwd: string
---   @bssid: string
+--   @calback: function
 --
 --  Returns:
 --    nil or err
 --]]
-function Wifi:sta_init(ssid, pwd)
+function Wifi:sta_init(ssid, pwd, callback)
   -- Station config params
   local sta_config = {
     ssid = ssid,
     pwd = pwd,
-    auto = self.STA_AUTO_CONNECT
+    auto = self._STA_AUTO_CONNECT,
+    save = self._SAVE_CONFIG
   }
 
   -- Config Wifi Station
-  local _, err = pcall(self.sta.config, sta_config, self.SAVE)
-  if err ~= nil then return err end
+  assert(self.sta.config(sta_config))
+
 
   -- Wifi station hostname
-  local _, err pcall(self.sta.sethostname, self.NAME)
-  if err ~= nil then return err end
+  assert(self.sta.sethostname(self._NAME))
+
 
   -- Connect to access point
-  local _, err = pcall(self.sta.connect)
+  pcall(self.sta.connect, callback)
 
   sta_config = nil
   collectgarbage()
-  return nil or err
 end
 
 
@@ -132,31 +128,30 @@ end
 --   err or nil
 --]]
 function Wifi:scan_network(scan_callback)
-  local _, err = pcall(self.sta.scan, {}, scan_callback)
-  return nil or err
+  return pcall(self.sta.getap, 1, scan_callback)
 end
 
 
 --[[
--- Wifi Station clearconfig
+-- Wifi Station - Soft Disconnect
 --
--- As Wifi.sta.clearconfig() isn't
--- natively supported by dev-esp32
--- firmware, this resouce intends to
--- monkey patch adisconnection and reset
--- configs redefining it with empty
--- strings.
+-- Only disconnects from configured
+-- Access Point but doesn't erase
+-- credentials from flash.
 --]]
-function Wifi:force_disconnect()
-  local nil_config = {
-    ssid = '',
-    pwd = '',
-    auto = self.STA_AUTO_CONNECT
-  }
+function Wifi:soft_disconnect(callback)
+  return pcall(self.sta.disconnect, callback)
+end
 
-  -- Redefine station config
-  local _, err = pcall(self.sta.config, nil_config, self.SAVE)
-  return err
+--[[
+-- Wifi Station Hard Disconnect
+--
+-- Disconnects from configured Access
+-- Point and delete credentials from
+-- flash.
+--]]
+function Wifi:hard_disconnect(callback)
+  assert(self.sta.clearconfig())
 end
 
 return Wifi
