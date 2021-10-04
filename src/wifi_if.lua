@@ -25,32 +25,26 @@ function Wifi:new() -- Wifi class constructor
   local instance = {}
 
   -- Wifi module abstraction
-  instance.wifi = wifi
+  instance.wifi = assert(wifi)
   instance.ap = instance.wifi.ap
   instance.sta = instance.wifi.sta
 
   -- Wifi interface config
-  instance.MODE = instance.wifi.STATIONAP
-  instance.NAME = 'soil-sensor-develop-0.0.1'
-  instance.PWD = 'dummy-passphrase'
-  instance.AUTHMODE = instance.wifi.AUTH_WPA_WPA2_PSK
-  instance.HIDDEN = false
-  instance.CHANNEL = 11
-  instance.MAXCONN = 4
-  instance.BEACON = 100
-  instance.SAVE = true
-  instance.STA_AUTO_CONNECT = false
+  instance._MODE = instance.wifi.STATIONAP
+  instance._NAME = 'soil-sensor-develop-0.0.1'
+  instance._PWD = 'dummy-passphrase'
+  instance._AUTHMODE = instance.wifi.WPA_WPA2_PSK
+  instance._HIDDEN = false
+  instance._CHANNEL = 6
+  instance._MAXCONN = 4
+  instance._BEACON = 100
+  instance._SAVE = true
+  instance._STA_AUTO_CONNECT = false
 
   -- Wifi mode setup
-  local _, err = pcall(
-    instance.wifi.mode,
-    instance.MODE,
-    instance.SAVE)
-  if err ~= nil then return err end
-
-  -- Initialize Wifi module
-  local _, err = pcall(instance.wifi.start)
-  if err ~= nil then return err end
+  assert(
+    instance.wifi.setmode(instance._MODE),
+    'cannot init STATIONAP mode')
 
   setmetatable(instance, {__index = Wifi})
   return instance
@@ -66,22 +60,23 @@ end
 function Wifi:ap_init()
   -- AP config params
   local config = {
-    ssid=self.NAME,
-    pwd=self.PWD,
-    hidden=self.HIDDEN,
-    auth=self.AUTHMODE,
-    channel=self.CHANNEL,
-    max=self.MAXCONN,
-    beacon=self.BEACON,
-    save=self.SAVE
+    ssid = self._NAME,
+    pwd = self._PWD,
+    hidden = self._HIDDEN,
+    auth = self._AUTHMODE,
+    channel = self._CHANNEL,
+    max = self._MAXCONN,
+    beacon = self._BEACON,
+    save = self._SAVE
   }
 
-  -- Enable access point
-  local _, err = pcall(self.ap.config, config, self.SAVE)
+  ---- Enable access point
+  assert(
+    self.ap.config(config),
+    'cannot init wifi.ap')
 
   config = nil
   collectgarbage()
-  return nil or err
 end
 
 
@@ -145,7 +140,7 @@ end
 --[[
 -- Wifi Station clearconfig
 --
--- As wifi.sta.clearconfig() isn't
+-- As Wifi.sta.clearconfig() isn't
 -- natively supported by dev-esp32
 -- firmware, this resouce intends to
 -- monkey patch adisconnection and reset
