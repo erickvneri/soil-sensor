@@ -106,6 +106,12 @@ end
 --    nil or err
 --]]
 function Wifi:sta_init(ssid, pwd, callback)
+  -- Sanity check on required args
+  local arg_error = 'missing positional arg: '
+  assert(ssid, arg_error..'<ssid>')
+  assert(pwd, arg_error..'<pwd>')
+  assert(callback, arg_error..'<callback>')
+
   -- Station config params
   local sta_config = {
     ssid = ssid,
@@ -121,7 +127,7 @@ function Wifi:sta_init(ssid, pwd, callback)
   assert(self.sta.sethostname(self._NAME))
 
   -- Connect to access point
-  pcall(self.sta.connect, callback)
+  assert(pcall(self.sta.connect, callback))
 
   sta_config = nil
   collectgarbage()
