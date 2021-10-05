@@ -21,6 +21,24 @@
 local Wifi = {}
 
 
+-- Shortwand Wifi Events
+Wifi.evt = {}
+Wifi.evt.STA_CONNECTED = wifi.eventmon.STA_CONNECTED
+Wifi.evt.STA_DISCONNECTED = wifi.eventmon.STA_DISCONNECTED
+Wifi.evt.STA_AUTHMODE_CHANGE = wifi.eventmon.STA_AUTHMODE_CHANGE
+Wifi.evt.STA_GOT_IP = wifi.eventmon.STA_GOT_IP
+Wifi.evt.STA_DHCP_TIMEOUT = wifi.eventmon.STA_DHCP_TIMEOUT
+Wifi.evt.AP_STACONNECTED = wifi.eventmon.AP_STACONNECTED
+Wifi.evt.AP_STADISCONNECTED = wifi.eventmon.AP_STADISCONNECTED
+Wifi.evt.AP_PROBEREQRECVED = wifi.eventmon.AP_PROBEREQRECVED
+
+--[[
+-- Wifi class constructor
+--
+-- The wifi initializer abstracts the
+-- wifi intefaces (ap and sta) directly
+-- from the instance.
+--]]
 function Wifi:new() -- Wifi class constructor
   local instance = {}
 
@@ -48,12 +66,10 @@ function Wifi:new() -- Wifi class constructor
   return instance
 end
 
-
 --[[
--- Wifi Access Point Interface
---
--- Returns:
---   err or nil
+-- Configure the Wifi Access Point
+-- which will enable the 192.168.4.1
+-- address for Station configuration.
 --]]
 function Wifi:ap_init()
   -- AP config params
@@ -74,7 +90,6 @@ function Wifi:ap_init()
   config = nil
   collectgarbage()
 end
-
 
 --[[
 -- Configure the Wifi Station
@@ -102,10 +117,8 @@ function Wifi:sta_init(ssid, pwd, callback)
   -- Config Wifi Station
   assert(self.sta.config(sta_config))
 
-
-  -- Wifi station hostname
+  -- Set Wifi station hostname
   assert(self.sta.sethostname(self._NAME))
-
 
   -- Connect to access point
   pcall(self.sta.connect, callback)
@@ -113,7 +126,6 @@ function Wifi:sta_init(ssid, pwd, callback)
   sta_config = nil
   collectgarbage()
 end
-
 
 --[[
 -- Wifi Access Point Scanner.
@@ -130,7 +142,6 @@ end
 function Wifi:scan_network(scan_callback)
   return pcall(self.sta.getap, 1, scan_callback)
 end
-
 
 --[[
 -- Wifi Station - Soft Disconnect
@@ -153,5 +164,32 @@ end
 function Wifi:hard_disconnect(callback)
   assert(self.sta.clearconfig())
 end
+
+--[[
+-- Register callback for Wifi-specific
+-- event (AP and STA events).
+--
+-- Supported event enums under Wifi.evt:
+--
+-- STA_CONNECTED        0
+-- STA_DISCONNECTED     1
+-- STA_AUTHMODE_CHANGE  2
+-- STA_GOT_IP           3
+-- STA_DHCP_TIMEOUT     4
+-- AP_STADISCONNECTED   5
+-- AP_STACONNECTED      6
+-- AP_PROBEREQRECVED    7
+--
+-- doc ref:
+-- https://nodemcu.readthedocs.io/en/release/modules/wifi/#wifieventmonregister
+--]]
+function Wifi:subscribe(evt, callback)
+  pcall(self.wifi.eventmon.register, evt, callback)
+end
+
+function Wifi:unsubscribe(evt)
+  pcall(self.wifi.eventmon.unregister(evt))
+end
+
 
 return Wifi
