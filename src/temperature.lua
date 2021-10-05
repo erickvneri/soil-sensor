@@ -18,24 +18,60 @@
 -- LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
 -- OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
 -- THE SOFTWARE.
+
+--[[
+-- DHT-based Temperature & Humidity
+-- driver.
+--
+-- By default, the temperature provided
+-- is based in Celcius (°C) degree scale
+-- and does not support floating point.
+--]]
 local TemperatureSensor = {}
+-- DHT models-based enums
+TemperatureSensor.DHT11 = 0x01
+TemperatureSensor.DHT12 = 0x02
+TemperatureSensor.DHTxx = 0x03
+
+-- Status enums
+TemperatureSensor.OK = dht.OK
+TemperatureSensor.ERROR_CHECKSUM = dht.ERROR_CHECKSUM
+TemperatureSensor.ERROR_CHECKSUM = dht.ERROR_TIMEOUT
 
 
-function TemperatureSensor:new(gpio, component) -- class constructor
+--[[
+-- TemperatureSensor constructor
+--
+-- Takes:
+--
+-- Returns:
+--   {
+--     temperature: number,
+--     temp_decimal: number,
+--     humidity: number,
+--     hum_decimal: number,
+--     status: []
+--   }
+--
+--]]
+function TemperatureSensor:new(gpio, model) -- class constructor
   local instance = {}
+  -- model mapper
+  instance.models = {
+    [0x01] = dht.read11,
+    [0x02] = dht.read12,
+    [0x03] = dht.readxx,
+  }
+  -- status mapper
+  instance.status = {
+    [dht.OK] = 'OK',
+    [dht.ERROR_CHECKSUM] = 'CHECKSUM ERROR',
+    [dht.ERROR_TIMEOUT] = 'TIMEOUT ERROR'
+  }
 
   -- DHT module abrstracion
   instance.gpio = gpio
-  instance.component = dht
-  instance.IS_DHT2x = true and component or false
-
-  -- Shorthand enums
-  instance.OK = instance.component.OK
-  -- Error enum & msg
-  instance.ERROR_CHECKSUM = instance.component.ERROR_CHECKSUM
-  instance.CHECKSUM_MSG = 'Checksum failed'
-  instance.ERROR_TIMEOUT = instance.component.ERROR_TIMEOUT
-  instance.TIMEOUT_MSG = 'GPIO did timout'
+  instance.read = instance.models[model or 0x01]
 
   setmetatable(instance, {__index = TemperatureSensor})
   return instance
@@ -43,16 +79,15 @@ end
 
 
 function TemperatureSensor:getdata()
-  local stat, temp, hum = assert(self.component.read11(self.gpio))
-  local err = nil
+  local stat, temp, hum, temp_dec, hum_dec = assert(self.read(self.gpio))
+  return {
+    status = self.status[stat],
+    temperature = temp,
+    temp_dec = temp_dec,
+    humidity = hum,
+    hum_decimal = hum_dec
+  }
 
-  if stat == self.ERROR_CHECKSUM then
-    err = self.CHECKSUM_MSG
-  elseif stat == self.ERROR_TIMEOUT then
-    err = self.TIMEOUT_MSG
-  end
-  return err, temp, hum
 end
 
 return TemperatureSensor
-

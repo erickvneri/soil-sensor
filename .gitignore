@@ -41,4 +41,5 @@ luac.out
 *.hex
 
 # nodemcu firmware
-nodemcu-dev-esp32-*
+nodemcu-release-*
+nodemcu-dev-*
