@@ -54,7 +54,7 @@ TemperatureSensor.ERROR_CHECKSUM = dht.ERROR_TIMEOUT
 --   }
 --
 --]]
-function TemperatureSensor:new(gpio, model) -- class constructor
+function TemperatureSensor:new(gpio_pin, model) -- class constructor
   local instance = {}
   -- model mapper
   instance.models = {
@@ -70,7 +70,7 @@ function TemperatureSensor:new(gpio, model) -- class constructor
   }
 
   -- DHT module abrstracion
-  instance.gpio = gpio
+  instance.gpio = gpio_pin
   instance.read = instance.models[model or 0x01]
 
   setmetatable(instance, {__index = TemperatureSensor})
@@ -87,7 +87,6 @@ function TemperatureSensor:getdata()
     humidity = hum,
     hum_decimal = hum_dec
   }
-
 end
 
 return TemperatureSensor
