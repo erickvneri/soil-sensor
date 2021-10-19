@@ -43,3 +43,4 @@ luac.out
 # nodemcu firmware
 nodemcu-release-*
 nodemcu-dev-*
+nodemcu_*
