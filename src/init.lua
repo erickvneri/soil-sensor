@@ -22,7 +22,7 @@ print([[
 
              |||| ||   ||  |||| ||||   |||   ||     || |||||
               ||  |||  ||   ||   ||  ||   || |||   ||| ||
-         |||  ||  || | ||   |||||||  ||   || || | | || ||||   |||
+         |||  ||  || | ||   |||||||  ||   || || | | || ||||  |||
               ||  ||  |||   ||   ||  ||   || ||  |  || ||
              |||| ||   ||  |||| ||||   |||   ||     || |||||
 
@@ -32,13 +32,39 @@ print([[
        || ||   ||  ||   ||  ||       || ||    ||  |||     || ||   || ||  ||
    |||||    |||   |||| |||||||   |||||  ||||| ||   || |||||    |||   ||   ||
 
+                              |||        |||        ||
+                            ||   ||    ||   ||     |||
+                     || ||  ||   ||    ||   ||      ||
+                      |||   ||   ||    ||   ||      ||
+                       |      |||   ||   |||   ||  ||||
 ]])
 local Wifi = require 'wifi_if'
-local TemperatureSensor = require 'components.temperature'
 
 local network = Wifi:new()
 network:ap_init()
 
-local temp_component = TemperatureSensor:new(14)
-local err, temp, hum = temp_component:getdata()
-print(string.format('Temperature: %s, Humidity: %s, Error: %s', temp, hum, tostring(err)))
+network:subscribe(Wifi.evt.AP_STACONNECTED, function (...)
+  for k,v in pairs(({...})[1]) do print(k,v) end
+
+  network:subscribe(Wifi.evt.AP_STADISCONNECTED, function (...)
+    for k,v in pairs(({...})[1]) do print(k,v) end
+
+  end)
+end)
+
+
+local Button = require 'button'
+local mode_btn = Button:new(1)
+
+mode_btn:subscribe(Button.x1, Button.SHORT_PRESS, function()
+  print('>> Single press')
+end)
+
+mode_btn:subscribe(Button.x3, Button.LONG_PRESS, function()
+  print('>> Triple long press')
+end)
+
+mode_btn:subscribe(Button.x2, Button.SHORT_PRESS, function()
+  print('>> Double press')
+end)
+mode_btn:init()
