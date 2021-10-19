@@ -156,19 +156,11 @@ end
 -- Access Point but doesn't erase
 -- credentials from flash.
 --]]
-function Wifi:soft_disconnect(callback)
+function Wifi:disconnect(force, callback)
+  if force then
+    assert(self.sta.clearconfig())
+  end
   return pcall(self.sta.disconnect, callback)
-end
-
---[[
--- Wifi Station Hard Disconnect
---
--- Disconnects from configured Access
--- Point and delete credentials from
--- flash.
---]]
-function Wifi:hard_disconnect(callback)
-  assert(self.sta.clearconfig())
 end
 
 --[[
