@@ -20,13 +20,24 @@
 -- THE SOFTWARE.
 local Button = {}
 
--- Button event constants
-Button.x1 = 0x01
-Button.x2 = 0x02
-Button.x3 = 0x03
-Button.DEBOUNCE_TIME = (300 * 1000)
-Button.TIMEOUT_MS = (500)
+-- Button constants
+Button.x1 = 1
+Button.x2 = 2
+Button.x3 = 3
+Button.x4 = 4
+Button.LONG_PRESS = -1
+Button.LONG_PRESS_MS = 4000
+Button.SHORT_PRESS = -2
+Button.SHORT_PRESS_MS = 500
+Button.DEBOUNCE_TIME = (200 * 1000)
+Button.TIMEOUT_MS = 400
+Button.PRESSED = 0
+Button.RELEASED = 1
+Button.RESTART_TO = true
 
+--[[
+-- Button class constructor
+--]]
 function Button:new(pin)
   local instance = {}
 
@@ -52,34 +63,65 @@ end
 -- None argument will be passed
 -- to the invoked callback.
 --]]
-function Button:subscribe(press_count, callback)
-  self.evt_handlers[press_count] = callback
+function Button:subscribe(press_count, press_lenght, callback)
+  self.evt_handlers[press_count] = {
+    func = callback,
+    press_lenght = press_lenght
+  }
 end
-
 
 --[[
 -- Initialize the task that will
 -- keep listening the gpio events.
 --]]
 function Button:init()
+  pcall(gpio.trig, self.pin, 'both', function(io, ...)
+    --[[
+    -- Handle Button Press
+    -- On Pulled Up GPIO, io = 0
+    --]]
+    if io == self.PRESSED then
+      -- Initialize counting press events
+      self.pcount = self.pcount + 1
 
-  pcall(gpio.trig, self.pin, 'down', function (...)
-    -- timeout callback
-    local function timeout_btn()
-      local evt_handler = self.evt_handlers[self.pcount]
+      -- Initialize timeout timer based on
+      -- a long_press ms reference
+      -- which will trigger if button is
+      -- held.
+      self.timeout:register(4000, tmr.ALARM_SINGLE, function()
+        local handler = self.evt_handlers[self.pcount]
 
-      -- invoke callback
-      pcall(evt_handler)
-      self.pcount = 0
+        -- Validate press subscription
+        -- configuration
+        if handler and handler.press_lenght == self.LONG_PRESS then
+          pcall(handler.func)
+        end
+        self.pcount = 0
+      end)
+      -- restart timer
+      self.timeout:start(self.RESTART_TO)
+
+      ---[[
+      -- Handle Button Release
+      -- On Pulled Up GPIO, io = 1
+      --]]
+    elseif io == self.RELEASED and self.pcount > 0 then
+      -- Reinitialize timeout timer based on
+      -- a short_press ms reference that will
+      -- trigger once button is released (io = 1)
+      self.timeout:register(500, tmr.ALARM_SINGLE, function ()
+        local handler = self.evt_handlers[self.pcount]
+
+        -- Validate press subscription
+        -- configuration
+        if handler and handler.press_lenght == self.SHORT_PRESS then
+          pcall(handler.func)
+        end
+        self.pcount = 0
+      end)
+      -- restart timer
+      self.timeout:start(self.RESTART_TO)
     end
-
-    -- debounce press event
-    tmr.delay(self.DEBOUNCE_TIME)
-    self.pcount = self.pcount + 1
-
-    -- reset timer
-    self.timeout:register(self.TIMEOUT_MS, tmr.ALARM_SINGLE, timeout_btn)
-    self.timeout:start(true)
   end)
 end
 
