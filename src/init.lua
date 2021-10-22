@@ -68,3 +68,28 @@ mode_btn:subscribe(Button.x2, Button.SHORT_PRESS, function()
   print('>> Double press')
 end)
 mode_btn:init()
+
+local TemperatureSensor = require 'temperature_sensor'
+local temp_sensor = TemperatureSensor:new(2, TemperatureSensor.DHT11)
+local temp_data = temp_sensor:getdata()
+print(string.format(
+  'Temperature: %s°C, Humidity: %s%%',
+  tostring(temp_data.temperature),
+  tostring(temp_data.humidity)))
+
+local SoilSensor = require 'soil_sensor'
+local soil_sensor = SoilSensor:new()
+print('Moisture level: '..tostring(soil_sensor:get_level()..'%'))
+
+function main()
+  while true do
+    tmr.delay(1500000)
+    print('In Home - Soil Sensor v0.0.1.dev')
+    print(string.format(
+      'Temperature: %s°C, Humidity: %s%%',
+      tostring(temp_data.temperature),
+      tostring(temp_data.humidity)))
+    print('Moisture level: '..tostring(soil_sensor:get_level()..'%'))
+    print('\n')
+  end
+end
