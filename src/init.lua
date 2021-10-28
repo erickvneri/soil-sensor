@@ -43,53 +43,37 @@ local Wifi = require 'wifi_if'
 local network = Wifi:new()
 network:ap_init()
 
-network:subscribe(Wifi.evt.AP_STACONNECTED, function (...)
-  for k,v in pairs(({...})[1]) do print(k,v) end
-
-  network:subscribe(Wifi.evt.AP_STADISCONNECTED, function (...)
-    for k,v in pairs(({...})[1]) do print(k,v) end
+function main()
+  -- hardcoded for testing purposes
+  network:sta_init('', '', function (...)
+    for k,v in pairs(({...})[1]) do
+      print(k,v)
+    end
 
   end)
-end)
 
+  network:subscribe(network.evt.STA_GOT_IP, function(...)
+    for k,v in pairs(({...})[1]) do
+      print(k,v)
+    end
 
-local Button = require 'button'
-local mode_btn = Button:new(1)
+    local SSDP = (require 'ssdp'):new()
+    SSDP:on_msearch(function (req)
+      return table.concat({
+        'HTTP/1.1 200 OK',
+        'Cache-Control: max-age=100',
+        'EXT:',
+        'SERVER: NodeMCU/Lua5.1.4 UPnP/1.1 hello0world/0.1',
+        'ST: upnp:rootdevice',
+        'USN: uuid:hello-world:nodemcu',
+        'Location: http://'..wifi.sta.getip()..':80/hello-world.xml'
+      }, '\r\n')
+    end)
+  end)
 
-mode_btn:subscribe(Button.x1, Button.SHORT_PRESS, function()
-  print('>> Single press')
-end)
-
-mode_btn:subscribe(Button.x3, Button.LONG_PRESS, function()
-  print('>> Triple long press')
-end)
-
-mode_btn:subscribe(Button.x2, Button.SHORT_PRESS, function()
-  print('>> Double press')
-end)
-mode_btn:init()
-
-local TemperatureSensor = require 'temperature_sensor'
-local temp_sensor = TemperatureSensor:new(2, TemperatureSensor.DHT11)
-local temp_data = temp_sensor:getdata()
-print(string.format(
-  'Temperature: %s°C, Humidity: %s%%',
-  tostring(temp_data.temperature),
-  tostring(temp_data.humidity)))
-
-local SoilSensor = require 'soil_sensor'
-local soil_sensor = SoilSensor:new()
-print('Moisture level: '..tostring(soil_sensor:get_level()..'%'))
-
-function main()
-  while true do
-    tmr.delay(1500000)
-    print('In Home - Soil Sensor v0.0.1.dev')
-    print(string.format(
-      'Temperature: %s°C, Humidity: %s%%',
-      tostring(temp_data.temperature),
-      tostring(temp_data.humidity)))
-    print('Moisture level: '..tostring(soil_sensor:get_level()..'%'))
-    print('\n')
-  end
+  network:subscribe(network.evt.STA_DISCONNECTED, function(...)
+    for k,v in pairs(({...})[1]) do
+      print(k,v)
+    end
+  end)
 end

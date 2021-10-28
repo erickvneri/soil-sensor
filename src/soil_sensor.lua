@@ -44,9 +44,9 @@ end
 -- the raw ADC reading.
 --]]
 function SoilSensor:get_raw()
-  local _, data = assert(pcall(adc.read, self.adc_channel))
+  local _, raw_adc = assert(pcall(adc.read, self.adc_channel))
 
-  return data
+  return raw_adc
 end
 
 --[[
@@ -56,7 +56,7 @@ end
 -- level/percentage of moisture detected.
 --]]
 function SoilSensor:get_level()
-  local _, raw = assert(pcall(adc.read, self.adc_channel))
+  local _, raw = assert(pcall(self.get_raw, self))
 
   local level = ((raw - self.MAX_MEASURE) * 100) / (self.MAX_MEASURE - self.MIN_MEASURE)
   return math.floor(math.abs(level))
